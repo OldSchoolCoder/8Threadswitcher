@@ -1,12 +1,14 @@
 public class Switcher {
-    public static void main(String[] args) {
-        MasterSlaveBarrier barrier = new MasterSlaveBarrier();
+    public static void main(String[] args) throws InterruptedException {
+        MasterSlaveBarrier masterSlaveBarrier = new MasterSlaveBarrier();
         Thread first = new Thread(
                 () -> {
                     while (true) {
+                        masterSlaveBarrier.doneMaster();
                         System.out.println("Thread A");
                         try {
                             Thread.sleep(1000);
+                            masterSlaveBarrier.tryMaster();
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
@@ -16,8 +18,10 @@ public class Switcher {
         Thread second = new Thread(
                 () -> {
                     while (true) {
-                        System.out.println("Thread B");
+                        masterSlaveBarrier.doneSlave();
                         try {
+                            masterSlaveBarrier.trySlave();
+                            System.out.println("Thread B");
                             Thread.sleep(1000);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
@@ -25,9 +29,9 @@ public class Switcher {
                     }
                 }
         );
-        barrier.doneMaster(first);
-        barrier.doneSlave(second);
-        barrier.tryMaster();
-        barrier.trySlave();
+        first.start();
+        second.start();
+        first.join();
+        second.join();
     }
 }
